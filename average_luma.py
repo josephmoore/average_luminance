@@ -2,7 +2,17 @@ from PIL import Image, ImageStat
 import PIL
 import glob
 import multiprocessing
-import functools
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-s', '--source', help='source directory', required=True)
+parser.add_argument('-t', '--ftype', help='image file type, e.g. jpg png, only required if dest=dir')
+parser.add_argument('-d', '--dest', help='destination directory', required=True)
+args = parser.parse_args()
+
+src = args.source
+ftype = args.ftype
+dst = args.dest
 
 SRC="/home/delta/Desktop/animals-2019-08-25/153.156.168.63_80/"
 
