@@ -19,31 +19,12 @@ SRC="/home/delta/Desktop/animals-2019-08-25/153.156.168.63_80/"
 # conversion matrix for rgb to gray
 RGB2XYZ = (0.2125, 0.7154, 0.0721, 0,)
 
-#fnames_lumas = []
-
-def set_global_session():
-    global session
-    if not session:
-        session = PIL.Session()
-
 
 def get_fnames(ftype):
     fnames = [f for f in glob.glob(f"{SRC}*.{ftype}")]
     return fnames
 
 
-def append_output(alist):
-    def decorator_append(func):
-        @functools.wraps(func)
-        def wrapper_append(*args, **kwargs):
-            value = func(*args, **kwargs)
-            alist.append(value)
-            return value
-        return wrapper_append
-    return decorator_append
-
-
-#@append_output(alist=fnames_lumas)
 def average_luma(imgname):
     img = Image.open(imgname)
     if img.mode is 'RGB':
