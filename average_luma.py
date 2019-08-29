@@ -1,28 +1,34 @@
+#!/usr/bin/python3
 from PIL import Image, ImageStat
-import PIL
-import glob
+import sys
+import os
+from glob import glob
 import multiprocessing
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-s', '--source', help='source directory', required=True)
-parser.add_argument('-t', '--ftype', help='image file type, e.g. jpg png, only required if dest=dir')
-parser.add_argument('-d', '--dest', help='destination directory', required=True)
+parser.add_argument('-s', '--source', help='source directory or image', required=True)
+parser.add_argument('-t', '--ftype', help='image file type, e.g. jpg png')
+parser.add_argument('-d', '--dest', help='destination directory')
+parser.add_argument('--plot', help='plot luminance values of images', action='store_true')
 args = parser.parse_args()
 
-src = args.source
-ftype = args.ftype
-dst = args.dest
+plot = False
+if args.plot is True and os.path.isdir(args.source):
+    import matplotlib.pyplot as plt
+    plot = True
 
-SRC="/home/delta/Desktop/animals-2019-08-25/153.156.168.63_80/"
+SRC = args.source
+FTYPE = args.ftype
+DST = args.dest
 
 # conversion matrix for rgb to gray
 RGB2XYZ = (0.2125, 0.7154, 0.0721, 0,)
 
 
-def get_fnames(ftype):
-    fnames = [f for f in glob.glob(f"{SRC}*.{ftype}")]
-    return fnames
+def get_image_paths(src_dir, ftype):
+    img_paths = [f for f in glob.glob(f"{src_dir}*.{ftype}")]
+    return img_paths
 
 
 def average_luma(imgname):
@@ -39,9 +45,17 @@ def get_all_lumas(img_list):
 
 
 def main():
-    fnames = get_fnames('jpg')
-    fnames_lumas = get_all_lumas(fnames)
-    return fnames_lumas
+    if os.path.isdir(SRC):
+        if ftype is None:
+            print("specify a file type when sourcing from a directory")
+            sys.exit()
+        img_list = get_image_paths(SRC, FTYPE)
+        luma_list = get_all_lumas(img_list)
+        if plot is True:
+            _ = plt.hist(luma_list, bins=255, color='k', alpha=0.5)
+
+    elif os.path.isfile(SRC):
+        print(average_luma(src))
 
 
 if __name__ == "__main__":
