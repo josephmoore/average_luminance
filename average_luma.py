@@ -27,7 +27,7 @@ RGB2XYZ = (0.2125, 0.7154, 0.0721, 0,)
 
 
 def get_image_paths(src_dir, ftype):
-    img_paths = [f for f in glob.glob(f"{src_dir}*.{ftype}")]
+    img_paths = [f for f in glob(f"{src_dir}*.{ftype}")]
     return img_paths
 
 
@@ -46,13 +46,15 @@ def get_all_lumas(img_list):
 
 def main():
     if os.path.isdir(SRC):
-        if ftype is None:
+        if FTYPE is None:
             print("specify a file type when sourcing from a directory")
             sys.exit()
         img_list = get_image_paths(SRC, FTYPE)
-        luma_list = get_all_lumas(img_list)
+        fname_luma_list = get_all_lumas(img_list)
         if plot is True:
-            _ = plt.hist(luma_list, bins=255, color='k', alpha=0.5)
+            lumas = [x[1] for x in fname_luma_list]
+            _ = plt.hist(lumas, bins=255, color='k', alpha=0.5)
+            plt.show()
 
     elif os.path.isfile(SRC):
         print(average_luma(src))
