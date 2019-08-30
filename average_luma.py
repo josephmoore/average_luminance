@@ -9,19 +9,15 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--source', help='source directory or image', required=True)
 parser.add_argument('-t', '--ftype', help='image file type, e.g. jpg png')
-parser.add_argument('-d', '--dest', help='destination directory')
+parser.add_argument('-d', '--dest', help='destination .csv data file')
 parser.add_argument('--plot', help='plot luminance values of images', action='store_true')
+parser.add_argument('--stip-path', help='strips path of image file', action='store_true')
 args = parser.parse_args()
-
-plot = False
-if args.plot is True and os.path.isdir(args.source):
-    import matplotlib.pyplot as plt
-    plot = True
 
 SRC = args.source
 FTYPE = args.ftype
 DST = args.dest
-
+STRIPPATH = args.strip_path
 # conversion matrix for rgb to gray
 RGB2XYZ = (0.2125, 0.7154, 0.0721, 0,)
 
@@ -33,7 +29,7 @@ def get_image_paths(src_dir, ftype):
 
 def average_luma(imgname):
     img = Image.open(imgname)
-    if img.mode is 'RGB':
+    if img.mode == 'RGB':
         img = img.convert('L', RGB2XYZ)
     return (imgname, ImageStat.Stat(img).mean[0])
 
@@ -49,15 +45,38 @@ def main():
         if FTYPE is None:
             print("specify a file type when sourcing from a directory")
             sys.exit()
+        if args.plot is True and os.path.isdir(args.source):
+            import matplotlib.pyplot as plt
+            plot = True
+        else:
+            plot = False
+
         img_list = get_image_paths(SRC, FTYPE)
         fname_luma_list = get_all_lumas(img_list)
+
         if plot is True:
+            fig = plt.figure()
+            ax1 = fig.add_subplot(2, 1, 1)
+            ax2 = fig.add_subplot(2, 1, 2)
             lumas = [x[1] for x in fname_luma_list]
-            _ = plt.hist(lumas, bins=255, color='k', alpha=0.5)
+            _ = ax1.hist(lumas, bins=255, color='k', alpha=0.5)
             plt.show()
 
+        if DST is not None:
+            from pandas import Series
+            from natsort import natsorted
+
+            sorted_by_fname = natsorted(fname_luma_list, key=lambda x: x[0])
+
+            if STRIPPATH is True:
+                fl_series = Series({os.path.basename(f):l for f, l in sorted_by_fname})
+            else:
+                fl_series = Series({f:l for f, l in sorted_by_fname})
+
+            fl_series.to_csv(DST, header=['average lumninance'], index_label='filename')
+
     elif os.path.isfile(SRC):
-        print(average_luma(src))
+        print(average_luma(SRC))
 
 
 if __name__ == "__main__":
