@@ -47,7 +47,8 @@ def main():
         if FTYPE is None:
             print("specify a file type when sourcing from a directory")
             sys.exit()
-        if args.plot is True and os.path.isdir(args.source):
+
+        if args.plot is True:
             import matplotlib.pyplot as plt
             plot = True
         else:
