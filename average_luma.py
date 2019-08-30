@@ -7,8 +7,8 @@ import multiprocessing
 import argparse
 
 # simple calculation of average pixel luminance of a given image or images
-# can save data as csv and plot luminance of multiple images, 
-# see help for more options
+# requires Pillow, Pandas, and matplotlib
+# can save data as csv and plot luminance of multiple images 
 # currently most accurate when RGB images are 24bit and in the sRGB color space
 
 parser = argparse.ArgumentParser()
