@@ -6,18 +6,20 @@ from glob import glob
 import multiprocessing
 import argparse
 
+# currently most accurate when RGB images are 24bit and in the sRGB color space
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--source', help='source directory or image', required=True)
 parser.add_argument('-t', '--ftype', help='image file type, e.g. jpg png')
 parser.add_argument('-d', '--dest', help='destination .csv data file')
 parser.add_argument('--plot', help='plot luminance values of images', action='store_true')
-parser.add_argument('--stip-path', help='strips path of image file', action='store_true')
+parser.add_argument('--stip-paths', help='strips paths of image files names in .csv', action='store_true')
 args = parser.parse_args()
 
 SRC = args.source
 FTYPE = args.ftype
 DST = args.dest
-STRIPPATH = args.strip_path
+STRIPPATHS = args.strip_paths
 # conversion matrix for rgb to gray
 RGB2XYZ = (0.2125, 0.7154, 0.0721, 0,)
 
@@ -56,8 +58,7 @@ def main():
 
         if plot is True:
             fig = plt.figure()
-            ax1 = fig.add_subplot(2, 1, 1)
-            ax2 = fig.add_subplot(2, 1, 2)
+            ax1 = fig.add_subplot(1, 1, 1)
             lumas = [x[1] for x in fname_luma_list]
             _ = ax1.hist(lumas, bins=255, color='k', alpha=0.5)
             plt.show()
@@ -68,7 +69,7 @@ def main():
 
             sorted_by_fname = natsorted(fname_luma_list, key=lambda x: x[0])
 
-            if STRIPPATH is True:
+            if STRIPPATHS is True:
                 fl_series = Series({os.path.basename(f):l for f, l in sorted_by_fname})
             else:
                 fl_series = Series({f:l for f, l in sorted_by_fname})
