@@ -7,22 +7,23 @@ import multiprocessing
 import argparse
 
 # simple calculation of average pixel luminance of a given image or images
-# requires Pillow, Pandas, and matplotlib
-# can save data as csv and plot luminance of multiple images 
+# requires Pillow and Pandas
+# save data as csv
 # currently most accurate when RGB images are 24bit and in the sRGB color space
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--source', help='source directory or image', required=True)
 parser.add_argument('-t', '--ftype', help='image file type, e.g. jpg png')
 parser.add_argument('-d', '--dest', help='destination .csv data file')
-parser.add_argument('--plot', help='plot luminance values of images', action='store_true')
-parser.add_argument('--stip-paths', help='strips paths of image files names in .csv', action='store_true')
+parser.add_argument('-m', '--mask', help='mask for calculating select portions of image', default=None)
+parser.add_argument('--strip-paths', help='strips paths of image files names in .csv', action='store_true')
 args = parser.parse_args()
 
 SRC = args.source
 FTYPE = args.ftype
 DST = args.dest
 STRIPPATHS = args.strip_paths
+IMASK = Image.open(args.mask) if args.mask is not None else None
 # conversion matrix for rgb to gray
 RGB2XYZ = (0.2125, 0.7154, 0.0721, 0,)
 
@@ -36,7 +37,7 @@ def average_luma(imgname):
     img = Image.open(imgname)
     if img.mode == 'RGB':
         img = img.convert('L', RGB2XYZ)
-    return (imgname, ImageStat.Stat(img).mean[0])
+    return (imgname, ImageStat.Stat(img, mask=IMASK).mean[0])
 
 
 def get_all_lumas(img_list):
@@ -51,21 +52,8 @@ def main():
             print("specify a file type when sourcing from a directory")
             sys.exit()
 
-        if args.plot is True:
-            import matplotlib.pyplot as plt
-            plot = True
-        else:
-            plot = False
-
         img_list = get_image_paths(SRC, FTYPE)
         fname_luma_list = get_all_lumas(img_list)
-
-        if plot is True:
-            fig = plt.figure()
-            ax1 = fig.add_subplot(1, 1, 1)
-            lumas = [x[1] for x in fname_luma_list]
-            _ = ax1.hist(lumas, bins=255, color='k', alpha=0.5)
-            plt.show()
 
         if DST is not None:
             from pandas import Series
