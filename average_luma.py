@@ -7,9 +7,8 @@ import multiprocessing
 import argparse
 
 # simple calculation of average pixel luminance of a given image or images
-# requires Pillow and Pandas
+# requires Pillow, Pandas, natsort
 # save data as csv
-# currently most accurate when RGB images are 24bit and in the sRGB color space
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--source', help='source directory or image', required=True)
@@ -25,7 +24,7 @@ DST = args.dest
 STRIPPATHS = args.strip_paths
 IMASK = Image.open(args.mask) if args.mask is not None else None
 # conversion matrix for rgb to gray
-RGB2XYZ = (0.2125, 0.7154, 0.0721, 0,)
+# RGB2Y = (0.212655, 0.715158, 0.072187, 0,)
 
 
 def get_image_paths(src_dir, ftype):
@@ -36,7 +35,7 @@ def get_image_paths(src_dir, ftype):
 def average_luma(imgname):
     img = Image.open(imgname)
     if img.mode == 'RGB':
-        img = img.convert('L', RGB2XYZ)
+        img = img.convert('L')
     return (imgname, ImageStat.Stat(img, mask=IMASK).mean[0])
 
 
@@ -48,28 +47,27 @@ def get_all_lumas(img_list):
 
 def main():
     if os.path.isdir(SRC):
-        if FTYPE is None:
-            print("specify a file type when sourcing from a directory")
-            sys.exit()
+        from pandas import Series
+        from natsort import natsorted
 
         img_list = get_image_paths(SRC, FTYPE)
         fname_luma_list = get_all_lumas(img_list)
 
-        if DST is not None:
-            from pandas import Series
-            from natsort import natsorted
+        sorted_by_fname = natsorted(fname_luma_list, key=lambda x: x[0])
 
-            sorted_by_fname = natsorted(fname_luma_list, key=lambda x: x[0])
+        if STRIPPATHS is True:
+            fl_series = Series({os.path.basename(f):l for f, l in sorted_by_fname})
+        else:
+            fl_series = Series({f:l for f, l in sorted_by_fname})
 
-            if STRIPPATHS is True:
-                fl_series = Series({os.path.basename(f):l for f, l in sorted_by_fname})
-            else:
-                fl_series = Series({f:l for f, l in sorted_by_fname})
-
-            fl_series.to_csv(DST, header=['average lumninance'], index_label='filename')
+        fl_series.to_csv(DST, header=['average_lumninance'], index_label='filename')
 
     elif os.path.isfile(SRC):
         print(average_luma(SRC))
+
+    else:
+        print("Specify correct arguments")
+        sys.exit()
 
 
 if __name__ == "__main__":
